@@ -1,0 +1,22 @@
+- import xitrum.Action
+- import sample._
+- val userInfo = if (at.isDefinedAt("userInfo")) atJson("userInfo") else "'{}'"
+- val error = if (at.isDefinedAt("error")) atJson("error") else "'{}'"
+
+!!! 5
+html
+  head
+    != antiCsrfMeta
+    meta(content="text/html; charset=utf-8" http-equiv="content-type")
+    title PeerChat-Header
+    script
+      = "window.onError = function(e){alert(e.toString());};"
+      != "var userInfo = JSON.parse(" + userInfo + ");"
+      != "var error    = JSON.parse(" + error + ");"
+      = "window.addEventListener('message', function(e){"
+      = "  event.source.postMessage(JSON.stringify({userInfo:userInfo,error:error}), event.origin);"
+      = "  window.close();"
+      = "});"
+
+  body
+    p Welcome! wait a second...

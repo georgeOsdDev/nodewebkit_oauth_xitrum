@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="description" content="">
+<meta http-equiv=”Content-Type” content=”text/html; charset=UTF-8″ />
+<title>peerchat</title>
+<link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+</head>
+<body>
+<p><i class="fa fa-twitter"></i><a id="twlogin" class="authButton" href="http://127.0.0.1:8000/twlogin">Sign in with Twitter</a></p>
+<p><i class="fa fa-github"></i><a id="ghlogin" class="authButton" href="https://github.com/login/oauth/authorize?client_id=7c32db577ead973ce93f">Sign in with Github</a></p>
+<div id="user">
+  <img id="uimage"></img>
+  <p id="uname"></p>
+</div>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+var nwgui = require('nw.gui');
+(function(global){
+  var userInfo,
+      authPop, authPopNw, authPopAskRetry
+      ;
+  function renderUserInfo(uinfo){
+    $("#uname").text(uinfo.login);
+    $("#uimage").attr("src", uinfo.avatar_url);
+  }
+  function renderLoginFail(){
+  }
+  function listneAuthPop(e){
+    if (!e || !e.data || e.data === "__ready__") return;
+    clearInterval(authPopAskRetry);
+    authPop = null;
+
+    var message = JSON.parse(e.data);
+    if (message.error.error) {
+      console.log("loginFail",message.error);
+      renderLoginFail();
+    } else {
+      userInfo = message.userInfo;
+      renderUserInfo(userInfo);
+    }
+    window.removeEventListener("message", listneAuthPop);
+  }
+
+  $(function(){
+    $(".authButton").on("click",function(e){
+      e.preventDefault();
+      if (authPop) return false;
+      authPop = window.open(this.href, $(this).attr("id"), "menubar=no,location=no,resizable=yes,scrollbars=yes,status=yes");
+      authPopNw = nwgui.Window.get(authPop).on('loaded', function(){
+        this.window.require = require;
+      });
+      authPopAskRetry = setInterval(function(){
+        authPop.postMessage("give me userInfo","*");
+        if( authPop.closed) {
+          listneAuthPop();
+          authPop = null;
+        };
+      },1000);
+      window.addEventListener("message", listneAuthPop, false);
+    });
+  });
+})(window);
+</script>
+</body>
+</html>
